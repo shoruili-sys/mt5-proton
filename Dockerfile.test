@@ -142,17 +142,9 @@ RUN mkdir -p /proton && \
 # ═══════════════════════════════════════════════════════════════════
 
 RUN set -eux; \
-    # Cria grupo só se não existir com o NOME desejado
-    # (GID 1000 já pode existir no Ubuntu como grupo 'ubuntu')
-    if ! getent group ${APP_USER} > /dev/null; then \
-        # Se o GID já existe mas com outro nome, usa o existente
-        if getent group ${APP_GID} > /dev/null; then \
-            EXISTING_GROUP=$(getent group ${APP_GID} | cut -d: -f1); \
-            echo "⚠  GID ${APP_GID} já existe como '${EXISTING_GROUP}', usando ele"; \
-            # Adiciona o user a esse grupo
-        else \
-            groupadd -g ${APP_GID} ${APP_USER}; \
-        fi; \
+    # Cria grupo se não existir
+    if ! getent group ${APP_GID} > /dev/null; then \
+        groupadd -g ${APP_GID} ${APP_USER}; \
     fi; \
     # Cria usuário se não existir
     if ! id -u ${APP_USER} > /dev/null 2>&1; then \
@@ -174,12 +166,8 @@ RUN set -eux; \
         ${APP_HOME}/config \
         ${APP_HOME}/logs \
         ${APP_HOME}/.vnc; \
-    # Usa o GID real do user (pode ser diferente do APP_GID se foi criado
-    # com nome diferente)
-    REAL_UID=$(id -u ${APP_USER}); \
-    REAL_GID=$(id -g ${APP_USER}); \
-    chown -R ${REAL_UID}:${REAL_GID} ${APP_HOME}; \
-    echo "✓ User ${APP_USER} (UID ${REAL_UID}, GID ${REAL_GID}) criado"
+    chown -R ${APP_USER}:${APP_USER} ${APP_HOME}; \
+    echo "✓ User ${APP_USER} (UID ${APP_UID}) criado"
 
 # ═══════════════════════════════════════════════════════════════════
 # Scripts - copia cada um individualmente
